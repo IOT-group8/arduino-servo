@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write  # Required to push tags and create release
+
 jobs:
   build-release:
     runs-on: ubuntu-latest
@@ -13,7 +16,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0  # IMPORTANT: needed to fetch all tags
+        fetch-depth: 0  # Needed to fetch previous tags
 
     - name: Set up Arduino CLI
       uses: arduino/setup-arduino-cli@v2
@@ -23,10 +26,14 @@ jobs:
         arduino-cli core update-index
         arduino-cli core install esp32:esp32
 
+    - name: Install Required Libraries
+      run: |
+        arduino-cli lib install "ESP32Servo"
+        arduino-cli lib install "Firebase Arduino Client Library for ESP8266 and ESP32"
+
     - name: Determine Next Tag
       id: tag
       run: |
-        # Get latest tag matching v[0-9]+ and increment it
         latest=$(git tag --list 'v[0-9]*' | sort -V | tail -n 1)
         echo "Latest tag: $latest"
         if [[ "$latest" =~ ^v([0-9]+)$ ]]; then
