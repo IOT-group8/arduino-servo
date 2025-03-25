@@ -16,9 +16,7 @@ jobs:
         fetch-depth: 0  # IMPORTANT: needed to fetch all tags
 
     - name: Set up Arduino CLI
-      uses: arduino/setup-arduino-cli@v1
-      with:
-        version: latest
+      uses: arduino/setup-arduino-cli@v2
 
     - name: Install ESP32 Core
       run: |
