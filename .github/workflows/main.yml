@@ -1,0 +1,60 @@
+name: Auto Build and Release Firmware
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # IMPORTANT: needed to fetch all tags
+
+    - name: Set up Arduino CLI
+      uses: arduino/setup-arduino-cli@v1
+      with:
+        version: latest
+
+    - name: Install ESP32 Core
+      run: |
+        arduino-cli core update-index
+        arduino-cli core install esp32:esp32
+
+    - name: Determine Next Tag
+      id: tag
+      run: |
+        # Get latest tag matching v[0-9]+ and increment it
+        latest=$(git tag --list 'v[0-9]*' | sort -V | tail -n 1)
+        echo "Latest tag: $latest"
+        if [[ "$latest" =~ ^v([0-9]+)$ ]]; then
+          next=$((BASH_REMATCH[1] + 1))
+        else
+          next=1
+        fi
+        new_tag="v$next"
+        echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+        echo "Using tag: $new_tag"
+
+    - name: Compile Sketch
+      run: |
+        arduino-cli compile --fqbn esp32:esp32:esp32 servo.ino
+        mkdir -p dist
+        cp ./build/esp32.esp32.esp32/servo.ino.bin dist/servo-${{ steps.tag.outputs.new_tag }}.bin
+
+    - name: Create Git Tag
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git tag ${{ steps.tag.outputs.new_tag }}
+        git push origin ${{ steps.tag.outputs.new_tag }}
+
+    - name: Upload Firmware to GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.tag.outputs.new_tag }}
+        files: dist/servo-${{ steps.tag.outputs.new_tag }}.bin
