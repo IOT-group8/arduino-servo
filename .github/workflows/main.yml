@@ -40,9 +40,9 @@ jobs:
 
     - name: Compile Sketch
       run: |
-        arduino-cli compile --fqbn esp32:esp32:esp32 servo.ino
+        arduino-cli compile --fqbn esp32:esp32:esp32 arduino-servo
         mkdir -p dist
-        cp ./build/esp32.esp32.esp32/servo.ino.bin dist/servo-${{ steps.tag.outputs.new_tag }}.bin
+        cp ./build/esp32.esp32.esp32/arduino-servo.ino.bin dist/servo-${{ steps.tag.outputs.new_tag }}.bin
 
     - name: Create Git Tag
       run: |
